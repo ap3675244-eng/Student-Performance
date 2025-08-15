@@ -4,8 +4,23 @@ import matplotlib.pyplot as plt
 
 #Setup database
 
-conn = sqlite3.connect("student_performance.db") c = conn.cursor() c.execute(""" CREATE TABLE IF NOT EXISTS students ( username TEXT PRIMARY KEY, password TEXT, name TEXT, adm_no TEXT, std_class TEXT, section TEXT, roll_no TEXT ) """) conn.commit()
+# Setup database
+conn = sqlite3.connect("student_performance.db")
+c = conn.cursor()
 
+c.execute("""
+CREATE TABLE IF NOT EXISTS students (
+    username TEXT PRIMARY KEY,
+    password TEXT,
+    name TEXT,
+    adm_no TEXT,
+    std_class TEXT,
+    section TEXT,
+    roll_no TEXT
+)
+""")
+
+conn.commit()
 Sample data for demonstration
 
 sample_attendance = {'Jan': 92, 'Feb': 95, 'Mar': 88, 'Apr': 90} sample_marks = {'Math': 85, 'Science': 90, 'English': 78, 'Social': 88} sample_tests = ['Test 1 - Math: 80', 'Test 2 - Science: 85', 'Test 3 - English: 75'] sample_notes = ['Please improve handwriting.', 'Complete the pending homework.'] sample_tips = ['Practice Maths daily.', 'Read Science chapters thoroughly.']
