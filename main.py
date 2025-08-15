@@ -1,10 +1,10 @@
-import streamlit as st 
-import sqlite3 
+import streamlit as st
+import sqlite3
 import matplotlib.pyplot as plt
 
-#Setup database
-
+# ----------------------------
 # Setup database
+# ----------------------------
 conn = sqlite3.connect("student_performance.db")
 c = conn.cursor()
 
@@ -21,82 +21,88 @@ CREATE TABLE IF NOT EXISTS students (
 """)
 
 conn.commit()
-Sample data for demonstration
 
-sample_attendance = {'Jan': 92, 'Feb': 95, 'Mar': 88, 'Apr': 90} sample_marks = {'Math': 85, 'Science': 90, 'English': 78, 'Social': 88} sample_tests = ['Test 1 - Math: 80', 'Test 2 - Science: 85', 'Test 3 - English: 75'] sample_notes = ['Please improve handwriting.', 'Complete the pending homework.'] sample_tips = ['Practice Maths daily.', 'Read Science chapters thoroughly.']
+# ----------------------------
+# Functions
+# ----------------------------
+def add_student(username, password, name, adm_no, std_class, section, roll_no):
+    c.execute("INSERT OR REPLACE INTO students VALUES (?, ?, ?, ?, ?, ?, ?)",
+              (username, password, name, adm_no, std_class, section, roll_no))
+    conn.commit()
 
-Streamlit app
-
-st.set_page_config(page_title="Dev Memorial Public School - Student Performance", layout="wide") st.title("Dev Memorial Public School - Student Performance App")
-
-Session state
-
-if 'logged_in' not in st.session_state: st.session_state.logged_in = False if 'user' not in st.session_state: st.session_state.user = None
-
-Registration
-
-def register(): st.subheader("Register") username = st.text_input("Username") password = st.text_input("Password", type="password") name = st.text_input("Full Name") adm_no = st.text_input("Admission No.") std_class = st.text_input("Class") section = st.text_input("Section") roll_no = st.text_input("Roll No.")
-
-if st.button("Register"):
-    try:
-        c.execute("INSERT INTO students VALUES (?, ?, ?, ?, ?, ?, ?)",
-                  (username, password, name, adm_no, std_class, section, roll_no))
-        conn.commit()
-        st.success("Registration successful! You can now login.")
-    except sqlite3.IntegrityError:
-        st.error("Username already exists.")
-
-Login
-
-def login(): st.subheader("Login") username = st.text_input("Username") password = st.text_input("Password", type="password")
-
-if st.button("Login"):
+def get_student(username, password):
     c.execute("SELECT * FROM students WHERE username=? AND password=?", (username, password))
-    user = c.fetchone()
-    if user:
-        st.session_state.logged_in = True
-        st.session_state.user = user
-        st.experimental_rerun()
-    else:
-        st.error("Invalid credentials")
+    return c.fetchone()
 
-Dashboard
+# ----------------------------
+# Page 1: Login
+# ----------------------------
+st.title("📚 Dev Memorial Public School - Student Performance App")
 
-def dashboard(): user = st.session_state.user st.success(f"Welcome, {user[2]} ({user[3]})")
+menu = ["Login", "Register"]
+choice = st.sidebar.selectbox("Menu", menu)
 
-tabs = st.tabs(["Attendance", "Marks", "Test Records", "Notes", "Improvement Tips"])
+if choice == "Register":
+    st.subheader("Register Student")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    name = st.text_input("Full Name")
+    adm_no = st.text_input("Admission Number")
+    std_class = st.text_input("Class")
+    section = st.text_input("Section")
+    roll_no = st.text_input("Roll Number")
+    if st.button("Register"):
+        add_student(username, password, name, adm_no, std_class, section, roll_no)
+        st.success("✅ Registered Successfully!")
 
-with tabs[0]:
-    st.subheader("Attendance Record")
-    fig, ax = plt.subplots()
-    ax.bar(sample_attendance.keys(), sample_attendance.values(), color='skyblue')
-    ax.set_ylabel('Percentage')
-    ax.set_title('Monthly Attendance')
-    st.pyplot(fig)
+elif choice == "Login":
+    st.subheader("Student Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        student = get_student(username, password)
+        if student:
+            st.success(f"Welcome {student[2]} 👋")
+            
+            # Menu after login
+            tabs = st.tabs(["📄 Attendance", "📊 Marks", "📝 Test Records", "📬 Teacher Notes", "💡 Improvement Tips"])
+            
+            with tabs[0]:
+                st.subheader("Attendance")
+                st.info("Your attendance this term: 92% ✅")
+                st.progress(0.92)
+            
+            with tabs[1]:
+                st.subheader("Marks Overview")
+                marks_data = {"Math": 85, "Science": 78, "English": 90, "History": 88}
+                subjects = list(marks_data.keys())
+                scores = list(marks_data.values())
 
-with tabs[1]:
-    st.subheader("Marks Overview")
-    fig, ax = plt.subplots()
-    ax.pie(sample_marks.values(), labels=sample_marks.keys(), autopct='%1.1f%%')
-    ax.set_title('Subject-wise Marks')
-    st.pyplot(fig)
+                fig, ax = plt.subplots()
+                ax.bar(subjects, scores)
+                ax.set_ylabel("Marks")
+                ax.set_title("Marks Chart")
+                st.pyplot(fig)
 
-with tabs[2]:
-    st.subheader("Test Records")
-    for test in sample_tests:
-        st.write(f"- {test}")
+            with tabs[2]:
+                st.subheader("Test Records")
+                st.write("""
+                - **Math Test 1:** 85/100
+                - **Science Test 1:** 78/100
+                - **English Test 1:** 90/100
+                """)
 
-with tabs[3]:
-    st.subheader("Notes from Teachers to Parents")
-    for note in sample_notes:
-        st.info(note)
+            with tabs[3]:
+                st.subheader("Notes from Teacher")
+                st.write("📌 Keep up the great work in English and History.")
+                st.write("📌 Pay more attention to Science homework.")
 
-with tabs[4]:
-    st.subheader("Improvement Tips")
-    for tip in sample_tips:
-        st.success(tip)
-
-Main logic
-
-if not st.session_state.logged_in: login() st.markdown("---") st.write("Don't have an account?") with st.expander("Register here"): register() else: dashboard()
-
+            with tabs[4]:
+                st.subheader("Improvement Tips")
+                st.write("""
+                - Revise Science chapters daily
+                - Practice Math problems from NCERT
+                - Read English newspapers to improve vocabulary
+                """)
+        else:
+            st.error("❌ Invalid username or password")
